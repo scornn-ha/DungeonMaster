@@ -54,8 +54,8 @@ public: // variables
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Component)
 	class UBoxComponent* AttackRange;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = PC)
-	class ARTSTest1_MainController* PlayerController;
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = PC)
+	//class ARTSTest1_MainController* PlayerController;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = PC)
 	bool bSpawnSetup = false;
 
