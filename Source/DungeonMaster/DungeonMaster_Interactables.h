@@ -6,14 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "DungeonMaster_Interactables.generated.h"
 
-UENUM()
-enum class ECurrentState : uint8
-{
-	Idle UMETA(DisplayName = "Idle"),
-	Moving UMETA(DisplayName = "Moving"),
-	Attacking UMETA(DisplayName = "Attacking"),
-	Stopped UMETA(DisplayName = "Stopped"),
-};
+UDELEGATE()
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FIntGetPlayerController);
 
 UCLASS()
 class DUNGEONMASTER_API ADungeonMaster_Interactables : public AActor
@@ -39,35 +33,31 @@ public: // variables
 	int Cost = 5;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Info)
 	float Damage = 5.f;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Info)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = PC)
 	float AttackTimer = 0.f;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Info)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = PC)
 	float AttackFinalTimer = 0.f;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Info)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Info)
 	float AttackCD = 0.9f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Info)
-	UTexture2D* unitThumbnail;
+	UTexture2D* Thumbnail;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Info)
+	bool bIsActive = false;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Info)
+	FVector currLocation;
 
 	/** A decal that shows if the unit is selected. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Component)
-	class UDecalComponent* HighlightedComp;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Component)
-	class UBoxComponent* AttackRange;
+	class UDecalComponent* SelectedComp;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Component)
+	class UDecalComponent* AreaOfEffect;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Component)
+	class USphereComponent* AttackRange;
 
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = PC)
-	//class ARTSTest1_MainController* PlayerController;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = PC)
-	bool bSpawnSetup = false;
-
-	/*Movement*/
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement)
-	FVector TilePosition;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement)
-	FVector Destination;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement)
-	ECurrentState UnitState = ECurrentState::Idle;
-	
+	class ADungeonMaster_PlayerController* PC;
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = PC)
+	//bool bSpawnSetup = false;
 
 protected:
 	// Called when the game starts or when spawned
@@ -75,6 +65,13 @@ protected:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+private:
+
+	UPROPERTY(BlueprintAssignable)
+	FIntGetPlayerController CallForPC;
+
+	UFUNCTION()
+	void GetPlayerController();
 
 
 };

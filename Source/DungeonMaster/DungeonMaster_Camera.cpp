@@ -18,7 +18,7 @@ ADungeonMaster_Camera::ADungeonMaster_Camera()
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->SetUsingAbsoluteRotation(true);
 	CameraBoom->TargetArmLength = 3000.f;
-	CameraBoom->SetRelativeRotation(FRotator(-70.f, 90.f, 0.f));
+	CameraBoom->SetRelativeRotation(FRotator(-90.f, 90.f, 0.f));
 	CameraBoom->bDoCollisionTest = false;
 
 	// Create a camera...

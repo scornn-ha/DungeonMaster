@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "DungeonMaster_Tiles_BASE.h"
 #include "DungeonMaster_GameManager.generated.h"
 
 USTRUCT(BlueprintType)
@@ -13,22 +14,17 @@ struct FGridCell
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	FVector midPoint;
-
-	bool bMoveable = false;
-	class ADungeonMaster_Tiles_BASE* TilePiece;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	ADungeonMaster_Tiles_BASE* TilePiece = nullptr;
 
 	bool operator==(const FGridCell& other) const
 	{
-
 		return (other.midPoint == midPoint);
-
 	}
 
 	bool operator!=(const FGridCell& other) const
 	{
-
 		return (other.midPoint != midPoint);
-
 	}
 
 	FGridCell()
@@ -52,20 +48,47 @@ public:	//Functions
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
 	FVector swBox = FVector(-2500.f, 2500.f, 0.f);
 
+	/*Tiles*/
 	UFUNCTION()
 	FGridCell findSpecificTile(FVector startPos);
 	UFUNCTION()
+	FVector findAttachmentLoc(FVector startPos);
+	UFUNCTION()
 	void changeCellTile(FVector MidPoint, class ADungeonMaster_Tiles_BASE* newTile);
+	UFUNCTION()
+	void switchCellTile(FVector MidPoint, class ADungeonMaster_Tiles_BASE* newTile);
+	UFUNCTION()
+	bool isValidCellTile(FVector MidPoint);
 
+	/*GameState*/
+	UFUNCTION()
+	void SetNumPoints(TArray<int> tileAmounts);
+	UFUNCTION()
+	void GetCurrNumPoints();
+	UFUNCTION()
+	bool AttachToTile(FVector position, AActor* newAttachment);
+	UFUNCTION()
+	void CharSwitchTileAttachment(FVector position, class ADungeonMaster_Characters* newAttachment, FVector newPos);
+	UFUNCTION()
+	bool FindTileAttachment(FVector position);
+	UFUNCTION()
+	void FillEmptyCells();
 
 public:	// variables
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GameState")
+	int neededConnectionPoints;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GameState")
+	int currentConnectionPoints;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	UPROPERTY(EditAnywhere, Category = "GameState")
+	UClass* TilesToFillWith;
 
 private:
 
@@ -85,7 +108,5 @@ private:
 	void fillDownColumns(FVector startCell);
 	UFUNCTION()
 	float checkBoundingEdges(float dx, float fx);
-
-	
 
 };

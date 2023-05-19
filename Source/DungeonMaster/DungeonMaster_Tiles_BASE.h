@@ -32,6 +32,18 @@ public:	// functions
 	UFUNCTION()
 	void OnClick(AActor* TouchedActor, FKey ButtonPressed);
 
+	/*Tiles*/
+	UFUNCTION()
+	void UpdateTileAmount(int newAmount);
+	UFUNCTION(BlueprintCallable)
+	void UpdateConnections();
+	UFUNCTION(BlueprintImplementableEvent)
+	void SetConnectionPoints();
+
+	/*Towers*/
+	UFUNCTION()
+	void SetAttachment(AActor* newAttachment);
+
 
 public: // variables
 
@@ -40,17 +52,29 @@ public: // variables
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Info")
 	UTexture2D* Thumbnail;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Info")
-	TArray<TSubclassOf<class ADungeonMaster_Interactables> > Attachments;
+	AActor* Attachment;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Info")
+	ETileType tileType = ETileType::Start;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Info")
+	TArray<FString> attachmentType;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Info")
+	FVector attachmentLocation;
 
 	/*Placement*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Placement") // Structure is fully finished and operational
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Placement") 
 	bool bIsActive = false;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Placement")
+	int currConnections = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Placement")
-	bool bCanPlace = false;
+	int maxConnections = 2;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Placement")
+	TArray<FVector> ConnectionPoints;
 
 	/*Misc*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Misc")
 	class ADungeonMaster_PlayerController* PC;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Misc")
+	int GridSpace;
 
 	/*Components*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Components)

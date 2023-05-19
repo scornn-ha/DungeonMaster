@@ -4,6 +4,8 @@
 #include "DungeonMaster_GameManager.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "DungeonMaster_Tiles_BASE.h"
+#include "DungeonMaster_INT_Towers.h"
+#include "DungeonMaster_Characters.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
@@ -121,7 +123,6 @@ float ADungeonMaster_GameManager::checkBoundingEdges(float dx, float fx)
 FGridCell ADungeonMaster_GameManager::findSpecificTile(FVector startPos)
 {
 	FGridCell returnCell;
-	startPos.Z = 125.f;
 
 	for (int i = 0; i < Grid.Num(); i++)
 	{
@@ -148,19 +149,256 @@ FGridCell ADungeonMaster_GameManager::findSpecificTile(FVector startPos)
 		}
 	}
 
-	returnCell.midPoint.Z = 125.f;
+	returnCell.midPoint.Z = 250.f;
 
 	return returnCell;
 }
 
 void ADungeonMaster_GameManager::changeCellTile(FVector tMidPoint, ADungeonMaster_Tiles_BASE* newTile) 
 {
+	tMidPoint.Z = 0.f;
 	for (int i = 0; i < Grid.Num(); i++) 
 	{
 		if (Grid[i].midPoint == tMidPoint) 
 		{
+			UE_LOG(LogTemp, Warning, TEXT("FOUND TILE"));
 			Grid[i].TilePiece = newTile;
+			Grid[i].TilePiece->GridSpace = i;
 			break;
 		}
 	}
+}
+
+void ADungeonMaster_GameManager::switchCellTile(FVector tMidPoint, ADungeonMaster_Tiles_BASE* newTile)
+{
+	tMidPoint.Z = 0.f;
+	for (int i = 0; i < Grid.Num(); i++)
+	{
+		if (Grid[i].midPoint == tMidPoint)
+		{
+			if (Grid[i].TilePiece != nullptr) 
+			{
+				Grid[i].TilePiece->UpdateTileAmount(1);
+				Grid[i].TilePiece->Destroy();
+				Grid[i].TilePiece = nullptr;
+
+				Grid[i].TilePiece = newTile;
+				Grid[i].TilePiece->bIsActive = true;
+				Grid[i].TilePiece->UpdateTileAmount(-1);
+				Grid[i].TilePiece->GridSpace = i;
+
+				break;
+			}
+		}
+	}
+}
+
+bool ADungeonMaster_GameManager::isValidCellTile(FVector tMidPoint)
+{
+	bool retVal = false;
+	tMidPoint.Z = 0.f;
+
+	for (int i = 0; i < Grid.Num(); i++)
+	{
+		if (Grid[i].midPoint == tMidPoint)
+		{
+			if (Grid[i].TilePiece != nullptr) 
+			{
+				retVal = true;
+				break;
+			}
+		}
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Bool value is: %s"), (retVal ? TEXT("true") : TEXT("false")));
+	return retVal;
+}
+
+void ADungeonMaster_GameManager::SetNumPoints(TArray<int> tileAmounts)
+{
+	int maxPoints = 0;
+
+	maxPoints += (tileAmounts[0] * 2);
+	maxPoints += (tileAmounts[1] * 2);
+	maxPoints += (tileAmounts[2] * 4);
+	maxPoints += tileAmounts[3];
+	maxPoints += tileAmounts[4];
+
+	neededConnectionPoints = maxPoints;
+
+}
+
+void ADungeonMaster_GameManager::GetCurrNumPoints() 
+{
+	currentConnectionPoints = 0;
+
+	for (int i = 0; i < Grid.Num(); i++)
+	{
+		if (Grid[i].TilePiece != nullptr)
+		{
+			currentConnectionPoints += Grid[i].TilePiece->currConnections;
+		}
+	}
+}
+
+bool ADungeonMaster_GameManager::AttachToTile(FVector position, AActor* newAttachment)
+{
+	bool retVal = false;
+	position.Z = 0.f;
+
+	for (int i = 0; i < Grid.Num(); i++)
+	{
+		if (Grid[i].midPoint == position)
+		{
+			if (Grid[i].TilePiece != nullptr) // change this to tile type
+			{
+				if (Grid[i].TilePiece->Attachment == nullptr) 
+				{
+					bool canPlace = false;
+					FString newString;
+					AActor* AttachmentToSet = newAttachment;
+
+					ADungeonMaster_Interactables* tAttachment = Cast<ADungeonMaster_Interactables>(newAttachment);
+					if (tAttachment) 
+					{
+						newString = tAttachment->GetFName().ToString();
+						AttachmentToSet = tAttachment;
+						UE_LOG(LogTemp, Warning, TEXT("%s"), *newString);
+
+					}
+
+					ADungeonMaster_Characters* tCharacter = Cast<ADungeonMaster_Characters>(newAttachment);
+					if (tCharacter)
+					{
+						newString = tCharacter->GetFName().ToString();
+						AttachmentToSet = tCharacter;
+						UE_LOG(LogTemp, Warning, TEXT("%s"), *newString);
+
+					}
+
+					for (int j = 0; j < Grid[i].TilePiece->attachmentType.Num(); j++)
+					{
+						if (newString.Contains(Grid[i].TilePiece->attachmentType[j]))
+						{
+							canPlace = true;
+							break;
+						}
+					}
+
+					if (canPlace == true)
+					{
+						Grid[i].TilePiece->SetAttachment(AttachmentToSet);
+						UE_LOG(LogTemp, Warning, TEXT("SetNewAttachment"));
+						retVal = true;
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	return retVal;
+}
+
+bool ADungeonMaster_GameManager::FindTileAttachment(FVector position)
+{
+	bool retVal = false;
+	position.Z = 0.f;
+
+	for (int i = 0; i < Grid.Num(); i++)
+	{
+		if (Grid[i].midPoint == position)
+		{
+			if (Grid[i].TilePiece != nullptr)
+			{
+				if (Grid[i].TilePiece->Attachment == nullptr)
+				{
+					retVal = true;
+					break;
+				}
+			}
+		}
+	}
+	return retVal;
+}
+
+void ADungeonMaster_GameManager::CharSwitchTileAttachment(FVector position, ADungeonMaster_Characters* newAttachment, FVector newPos)
+{
+	position.Z = 0.f;
+	newPos.Z = 0.f;
+
+	for (int i = 0; i < Grid.Num(); i++)
+	{
+		if (Grid[i].midPoint == position)
+		{
+			if (Grid[i].TilePiece != nullptr)
+			{
+				if (Grid[i].TilePiece->Attachment != nullptr) 
+				{
+					Grid[i].TilePiece->Attachment = nullptr;
+					break;
+				}
+			}
+		}
+	}
+
+	for (int j = 0; j < Grid.Num(); j++)
+	{
+		if (Grid[j].midPoint == newPos)
+		{
+			if (Grid[j].TilePiece != nullptr)
+			{
+				if (Grid[j].TilePiece->Attachment == nullptr)
+				{
+					Grid[j].TilePiece->SetAttachment(newAttachment);
+					break;
+				}
+			}
+		}
+	}
+
+}
+
+void ADungeonMaster_GameManager::FillEmptyCells()
+{
+	for (int i = 0; i < Grid.Num(); i++)
+	{
+		if (Grid[i].TilePiece == nullptr) 
+		{
+			FVector actorSpawnLocation = Grid[i].midPoint;
+			FRotator SpawnRotation = FRotator(0.f, 0.f, 0.f);
+			FActorSpawnParameters Spawn;
+			Spawn.Owner = this;
+			Spawn.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+			AActor* newTile = GetWorld()->SpawnActor(TilesToFillWith, &actorSpawnLocation, &SpawnRotation, Spawn);
+
+			if (newTile)
+			{
+				ADungeonMaster_Tiles_BASE* tileUpdate = Cast<ADungeonMaster_Tiles_BASE>(newTile);
+				if (tileUpdate) 
+				{
+					tileUpdate->bIsActive = true;
+					tileUpdate->SetActorLocation(findSpecificTile(actorSpawnLocation).midPoint);
+					Grid[i].TilePiece = tileUpdate;
+				}
+				
+			}
+		}
+	}
+}
+
+FVector ADungeonMaster_GameManager::findAttachmentLoc(FVector startPos)
+{
+	FVector retVal;
+	FGridCell newCell = findSpecificTile(startPos);
+
+	ADungeonMaster_Tiles_BASE* newTile = Cast<ADungeonMaster_Tiles_BASE>(newCell.TilePiece);
+	if (newTile) 
+	{
+		retVal = newCell.midPoint;
+		retVal.Z = 0.f;
+		retVal.Z = newTile->attachmentLocation.Z;
+	}
+
+	return retVal;
 }
