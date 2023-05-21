@@ -8,7 +8,6 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Components/BoxComponent.h"
 #include "DrawDebugHelpers.h"
-#include "DungeonMaster_Interactables.h"
 
 // Sets default values
 ADungeonMaster_Tiles_BASE::ADungeonMaster_Tiles_BASE()
@@ -35,6 +34,8 @@ ADungeonMaster_Tiles_BASE::ADungeonMaster_Tiles_BASE()
 void ADungeonMaster_Tiles_BASE::BeginPlay()
 {
 	Super::BeginPlay();
+
+	currHealth = maxHealth;
 
 	CallForPC.Broadcast();
 	this->SetConnectionPoints();
@@ -83,6 +84,15 @@ void ADungeonMaster_Tiles_BASE::OnClick(AActor* TouchedActor, FKey ButtonPressed
 			}
 
 		}
+		else if (ButtonPressed.GetFName() == "RightMouseButton") 
+		{
+			if (bIsActive == true && PC->isGameReady == false) 
+			{
+				UpdateTileAmount(1);
+				bIsActive = false;
+				PC->removeCellTile(this);
+			}
+		}
 	}
 }
 
@@ -103,10 +113,10 @@ void ADungeonMaster_Tiles_BASE::UpdateTileAmount(int newAmount)
 	case ETileType::Straight:
 		PC->TilePhaseUIUpdate.Broadcast(0, newAmount);
 		break;
-	case ETileType::Junction:
+	case ETileType::Bend:
 		PC->TilePhaseUIUpdate.Broadcast(1, newAmount);
 		break;
-	case ETileType::Bend:
+	case ETileType::Junction:
 		PC->TilePhaseUIUpdate.Broadcast(2, newAmount);
 		break;
 	case ETileType::Start:
@@ -131,22 +141,31 @@ void ADungeonMaster_Tiles_BASE::UpdateConnections()
 	for (int i = 0; i < ConnectionPoints.Num(); i++)
 	{
 		FVector newRot;
+		float changeValue = ConnectionPoints[i].Y;
+
+		if (changeValue > - 1.f && changeValue < 1.f) 
+		{
+			changeValue = ConnectionPoints[i].X;
+		}
+
 		if (currentRot.Yaw > -1.f && currentRot.Yaw < 1.f)  // 0 rotations /4 
 		{
-			newRot = FVector(0.f, ConnectionPoints[i].Y, 0.f);
+			newRot = FVector(0.f, changeValue, 0.f);
 		}
 		else if (currentRot.Yaw > 89.f && currentRot.Yaw < 91.f)  // 1 rotation
 		{
-			newRot = FVector((ConnectionPoints[i].Y * -1.f), 0.f, 0.f);
+			newRot = FVector((changeValue * -1.f), 0.f, 0.f);
 		}
 		else if (currentRot.Yaw > 179.f && currentRot.Yaw < 181.f) // 2 rotations
 		{
-			newRot = FVector(0.f, (ConnectionPoints[i].Y * -1.f), 0.f);
+			newRot = FVector(0.f, (changeValue * -1.f), 0.f);
 		}
 		else if (currentRot.Yaw > -91.f && currentRot.Yaw < -89.f) // 3 rotations
 		{
-			newRot = FVector(ConnectionPoints[i].Y, 0.f, 0.f);
+			newRot = FVector(changeValue, 0.f, 0.f);
 		}
+
+		UE_LOG(LogTemp, Warning, TEXT("Hit value is: %s"), *newRot.ToString());
 
 		// 0 rotations - Y axis
 		// 1 rotation - x axis

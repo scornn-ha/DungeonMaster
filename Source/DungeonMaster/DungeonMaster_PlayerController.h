@@ -51,6 +51,8 @@ public: // functions
 	void CheckConnections();
 	UFUNCTION()
 	void SetTileAttachment();
+	UFUNCTION()
+	void removeCellTile(class ADungeonMaster_Tiles_BASE* tile);
 
 	/*Selection*/
 	UFUNCTION()
@@ -59,6 +61,9 @@ public: // functions
 	void ClearSelection();
 	UFUNCTION()
 	bool FindSelection(AActor* unit);
+
+	UFUNCTION(BlueprintCallable)
+	void ManageMoney(int inputAmount);
 
 public: // variables
 
@@ -71,6 +76,8 @@ public: // variables
 	TArray<int> currentPlacements;
 	UPROPERTY(BlueprintAssignable)
 	FUpdateTileConnections CallTileUpdates;
+	UFUNCTION(BlueprintCallable)
+	void NexusDeath();
 
 	/*UI*/
 	UPROPERTY(BlueprintAssignable)
@@ -81,6 +88,7 @@ public: // variables
 	void TilePhaseUI();
 	UFUNCTION(BlueprintImplementableEvent)
 	void GamePhaseUI();
+
 
 	/*Misc*/
 	UPROPERTY(BlueprintAssignable)
@@ -117,8 +125,6 @@ protected: // bp calls
 	void StartGamePhase();
 	UFUNCTION(BlueprintCallable)
 	bool CheckMoney(int inputAmount);
-	UFUNCTION(BlueprintCallable)
-	void ManageMoney(int inputAmount);
 
 private:
 

@@ -2,8 +2,13 @@
 
 
 #include "DungeonMaster_Towers_Cannon.h"
+#include "Components/SphereComponent.h"
+#include "Components/DecalComponent.h"
 #include "DungeonMaster_Enemy_BASE.h"
 #include "DrawDebugHelpers.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 ADungeonMaster_Towers_Cannon::ADungeonMaster_Towers_Cannon()
 {
@@ -12,39 +17,36 @@ ADungeonMaster_Towers_Cannon::ADungeonMaster_Towers_Cannon()
 	Description = "This tower can be placed alongside the path and will shoot an AOE attack at an enemy.";
 	Cost = 600;
 	Damage = 18.f;
-	AttackCD = 3.f;
+	AttackCD = 1.8f;
+
+	AttackRange->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
+	SelectedComp->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
+	AreaOfEffect->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
 }
 
-void ADungeonMaster_Towers_Cannon::TowerAttackUnit()
+void ADungeonMaster_Towers_Cannon::DamageFunction()
 {
 	if (InRange.Num() > 0)
 	{
-		if (AttackTimer >= AttackFinalTimer)
+		AActor* attackUnit = InRange[0];
+		TArray<FHitResult> tHits;
+		FCollisionShape tcheckArea = FCollisionShape::MakeSphere(250.f);
+		DrawDebugSphere(GetWorld(), attackUnit->GetActorLocation(), tcheckArea.GetSphereRadius(), 10, FColor::Red, true);
+
+		bool isHit = GetWorld()->SweepMultiByChannel(tHits, attackUnit->GetActorLocation(), attackUnit->GetActorLocation(), FQuat::Identity, ECC_Pawn, tcheckArea);
+
+		if (isHit == true) // we hit something
 		{
-
-			AActor* attackUnit = InRange[0];
-			TArray<FHitResult> tHits;
-			FCollisionShape tcheckArea = FCollisionShape::MakeSphere(150.f);
-			DrawDebugSphere(GetWorld(), attackUnit->GetActorLocation(), tcheckArea.GetSphereRadius(), 50, FColor::Red, true);
-
-			bool isHit = GetWorld()->SweepMultiByChannel(tHits, attackUnit->GetActorLocation(), attackUnit->GetActorLocation(), FQuat::Identity, ECC_Pawn, tcheckArea);
-
-			if (isHit == true) // we hit something
+			for (int i = 0; i < tHits.Num(); i++)
 			{
-				for (int i = 0; i < tHits.Num(); i++)
+				ADungeonMaster_Enemy_BASE* tUnit = Cast<ADungeonMaster_Enemy_BASE>(tHits[i].Actor);
+				if (tUnit)
 				{
-					ADungeonMaster_Enemy_BASE* tUnit = Cast<ADungeonMaster_Enemy_BASE>(tHits[i].Actor);
-					if (tUnit)
-					{
-						DealDamageToEnemy(tUnit);
-					}
+					DealDamageToEnemy(tUnit);
 				}
 			}
-			Attacking.Broadcast();
 		}
-		else
-		{
-			Attacking.Broadcast();
-		}
+		FRotator NewRot = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), InRange[0]->GetActorLocation());
+		SetActorRelativeRotation(FRotator(0.f, NewRot.Yaw, 0.f));
 	}
 }

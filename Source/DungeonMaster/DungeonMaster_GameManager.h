@@ -34,6 +34,23 @@ struct FGridCell
 
 };
 
+USTRUCT(BlueprintType)
+struct FEnemyWave
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	int waveIndex;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	TArray<int> waveSpawns;
+
+	FEnemyWave()
+	{
+		waveIndex = 1;
+		waveSpawns.Empty();
+	}
+};
+
 UCLASS()
 class DUNGEONMASTER_API ADungeonMaster_GameManager : public AActor
 {
@@ -59,6 +76,8 @@ public:	//Functions
 	void switchCellTile(FVector MidPoint, class ADungeonMaster_Tiles_BASE* newTile);
 	UFUNCTION()
 	bool isValidCellTile(FVector MidPoint);
+	UFUNCTION()
+	void removeTile(FVector position);
 
 	/*GameState*/
 	UFUNCTION()
@@ -73,13 +92,40 @@ public:	//Functions
 	bool FindTileAttachment(FVector position);
 	UFUNCTION()
 	void FillEmptyCells();
+	UFUNCTION(BlueprintImplementableEvent)
+	void EndGame();
+	UFUNCTION(BlueprintImplementableEvent)
+	void LoadNextLevel();
+
+	/*Enemies*/
+	UFUNCTION()
+	void FindNexusLocation();
+	UFUNCTION()
+	void FindStartLocation();
 
 public:	// variables
 
+	/*Tiles*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GameState")
 	int neededConnectionPoints;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GameState")
 	int currentConnectionPoints;
+
+	/*Enemies*/
+	UPROPERTY(VisibleAnywhere, Category = "GameState")
+	FVector StartLocation;
+	UPROPERTY(VisibleAnywhere, Category = "GameState")
+	FVector NexusLocation;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "GameState")
+	TArray<FEnemyWave> WaveSpawns;
+	UPROPERTY(VisibleAnywhere, Category = "GameState")
+	int WaveNumber = 0;
+	UPROPERTY(VisibleAnywhere, Category = "GameState")
+	int EnemiesNum = 0;
+
+	/*Misc*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GameState")
+	FString newLevel;
 
 protected:
 	// Called when the game starts or when spawned
@@ -89,6 +135,15 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "GameState")
 	UClass* TilesToFillWith;
+	UPROPERTY(EditAnywhere, Category = "GameState")
+	UClass* Grunts;
+	UPROPERTY(EditAnywhere, Category = "GameState")
+	UClass* Archers;
+	UPROPERTY(EditAnywhere, Category = "GameState")
+	UClass* Marauders;
+
+	UFUNCTION(BlueprintCallable)
+	bool SpawnWave();
 
 private:
 
@@ -108,5 +163,27 @@ private:
 	void fillDownColumns(FVector startCell);
 	UFUNCTION()
 	float checkBoundingEdges(float dx, float fx);
+
+	/*Enemies*/
+	UFUNCTION()
+	void SpawnGrunts();
+	UFUNCTION()
+	void SpawnArchers();
+	UFUNCTION()
+	void SpawnMarauders();
+	UFUNCTION()
+	void SpawnEnemy(UClass* enemyType);
+
+	UPROPERTY(VisibleAnywhere, Category = "GameState")
+	int currGruntSpawns;
+	UPROPERTY(VisibleAnywhere, Category = "GameState")
+	int currArcherSpawns;
+	UPROPERTY(VisibleAnywhere, Category = "GameState")
+	int currMarauderSpawns;
+
+	FTimerHandle GruntTimerHandle;
+	FTimerHandle ArcherTimerHandle;
+	FTimerHandle MarauderTimerHandle;
+	
 
 };

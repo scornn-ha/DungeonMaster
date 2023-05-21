@@ -3,14 +3,14 @@
 
 #include "DungeonMaster_PlayerController.h"
 #include "DungeonMaster_Characters.h"
+#include "DungeonMaster_Towers.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "DungeonMaster_GameManager.h"
 #include "DungeonMaster_Tiles_BASE.h"
 #include "DungeonMaster_Camera.h"
-#include "DungeonMaster_Interactables.h"
-#include "DungeonMaster_INT_Towers.h"
+
 
 ADungeonMaster_PlayerController::ADungeonMaster_PlayerController()
 {
@@ -68,12 +68,42 @@ void ADungeonMaster_PlayerController::GetGameManager()
 
 void ADungeonMaster_PlayerController::SetSelection(AActor* unit) 
 {
+	ClearSelection();
 	currentSelection = unit;
-	//Set ui of unit
+	
+	ADungeonMaster_Characters* tChar = Cast<ADungeonMaster_Characters>(unit);
+	if (tChar) 
+	{
+		tChar->SetupUI();
+	}
+
+	ADungeonMaster_Towers* tTower = Cast<ADungeonMaster_Towers>(unit);
+	if (tTower)
+	{
+		tTower->SetupUI();
+	}
+
 }
 
 void ADungeonMaster_PlayerController::ClearSelection()
 {
+	if (currentSelection != nullptr) 
+	{
+		ADungeonMaster_Characters* tChar = Cast<ADungeonMaster_Characters>(currentSelection);
+		if (tChar)
+		{
+			tChar->ClearUI();
+			//change visibility
+		}
+
+		ADungeonMaster_Towers* tTower = Cast<ADungeonMaster_Towers>(currentSelection);
+		if (tTower)
+		{
+			tTower->ClearUI();
+		}
+
+	}
+	
 	currentSelection = nullptr;
 	//clear ui of unit
 }
@@ -190,6 +220,17 @@ void ADungeonMaster_PlayerController::CheckConnections()
 	}
 }
 
+void ADungeonMaster_PlayerController::removeCellTile(ADungeonMaster_Tiles_BASE* tile)
+{
+	GameManagerRef->removeTile(FindTilePosition(tile->GetActorLocation()));
+	tile->Destroy();
+}
+
+void ADungeonMaster_PlayerController::NexusDeath()
+{
+	GameManagerRef->EndGame();
+}
+
 /*##########################################################################################*/
 /*****************************************END OF TILES***************************************/
 /*##########################################################################################*/
@@ -227,7 +268,7 @@ void ADungeonMaster_PlayerController::MoveInteractableObject()
 			}
 			else  
 			{
-				//notify list
+				NotifyList.Broadcast("This space is already occupied by another attachment!");
 			}
 		}
 	}
@@ -251,6 +292,9 @@ void ADungeonMaster_PlayerController::StartGamePhase()
 {
 	this->GamePhaseUI();
 	GameManagerRef->FillEmptyCells();
+	GameManagerRef->FindNexusLocation();
+	GameManagerRef->FindStartLocation();
+
 
 }
 
@@ -260,13 +304,13 @@ void ADungeonMaster_PlayerController::SetTileAttachment()
 	{
 		if (GameManagerRef->AttachToTile(CurrentSpawnedActor->GetActorLocation(), CurrentSpawnedActor) == true) // we've made the attachment complete
 		{
-			ADungeonMaster_Interactables* newInteractable = Cast<ADungeonMaster_Interactables>(CurrentSpawnedActor);
-			if (newInteractable) 
+			ADungeonMaster_Towers* newTower = Cast<ADungeonMaster_Towers>(CurrentSpawnedActor);
+			if (newTower)
 			{
-				newInteractable->bIsActive = true;
+				newTower->bIsActive = true;
 				isBuilding = false;
 				CurrentSpawnedActor = nullptr;
-				ManageMoney(-newInteractable->Cost);
+				ManageMoney(-newTower->Cost);
 			}
 
 			ADungeonMaster_Characters* newChar = Cast<ADungeonMaster_Characters>(CurrentSpawnedActor);
@@ -281,7 +325,7 @@ void ADungeonMaster_PlayerController::SetTileAttachment()
 		else 
 		{
 			UE_LOG(LogTemp, Warning, TEXT("UH OH"));
-			//notify list
+			NotifyList.Broadcast("Cannot place attachment here!");
 		}
 	}
 }

@@ -4,7 +4,7 @@
 #include "DungeonMaster_GameManager.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "DungeonMaster_Tiles_BASE.h"
-#include "DungeonMaster_INT_Towers.h"
+#include "DungeonMaster_Towers.h"
 #include "DungeonMaster_Characters.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -33,7 +33,6 @@ void ADungeonMaster_GameManager::BeginPlay()
 
 	createGrid();
 }
-
 // Called every frame
 void ADungeonMaster_GameManager::Tick(float DeltaTime)
 {
@@ -258,7 +257,7 @@ bool ADungeonMaster_GameManager::AttachToTile(FVector position, AActor* newAttac
 					FString newString;
 					AActor* AttachmentToSet = newAttachment;
 
-					ADungeonMaster_Interactables* tAttachment = Cast<ADungeonMaster_Interactables>(newAttachment);
+					ADungeonMaster_Towers* tAttachment = Cast<ADungeonMaster_Towers>(newAttachment);
 					if (tAttachment) 
 					{
 						newString = tAttachment->GetFName().ToString();
@@ -298,6 +297,23 @@ bool ADungeonMaster_GameManager::AttachToTile(FVector position, AActor* newAttac
 	}
 
 	return retVal;
+}
+
+void ADungeonMaster_GameManager::removeTile(FVector pos) 
+{
+	pos.Z = 0.f;
+
+	for (int i = 0; i < Grid.Num(); i++)
+	{
+		if (Grid[i].midPoint == pos)
+		{
+			if (Grid[i].TilePiece != nullptr)
+			{
+				Grid[i].TilePiece = nullptr;
+				break;
+			}
+		}
+	}
 }
 
 bool ADungeonMaster_GameManager::FindTileAttachment(FVector position)
@@ -401,4 +417,118 @@ FVector ADungeonMaster_GameManager::findAttachmentLoc(FVector startPos)
 	}
 
 	return retVal;
+}
+
+void ADungeonMaster_GameManager::FindNexusLocation() 
+{
+	for (int i = 0; i < Grid.Num(); i++) 
+	{
+		if (Grid[i].TilePiece != nullptr) 
+		{
+			if (Grid[i].TilePiece->GetFName().ToString().Contains("Nexus"))
+			{
+				NexusLocation = Grid[i].midPoint;
+				NexusLocation.Z = 172.f;
+				break;
+			}
+		}
+	}
+}
+
+void ADungeonMaster_GameManager::FindStartLocation()
+{
+	for (int i = 0; i < Grid.Num(); i++)
+	{
+		if (Grid[i].TilePiece != nullptr)
+		{
+			if (Grid[i].TilePiece->GetFName().ToString().Contains("Start"))
+			{
+				StartLocation = Grid[i].midPoint;
+				StartLocation.Z = 172.f;
+				break;
+			}
+		}
+	}
+}
+
+bool ADungeonMaster_GameManager::SpawnWave() 
+{
+	bool retVal = false;
+
+	if (WaveSpawns.Num() > 0 && EnemiesNum == 0)
+	{
+		if (WaveNumber == WaveSpawns.Num()) 
+		{
+			if (newLevel.IsEmpty() == false)
+				this->LoadNextLevel();
+		}
+		else 
+		{
+			currGruntSpawns = WaveSpawns[WaveNumber].waveSpawns[0]; // 0 - grunts
+			currArcherSpawns = WaveSpawns[WaveNumber].waveSpawns[1]; // 1 - archers
+			currMarauderSpawns = WaveSpawns[WaveNumber].waveSpawns[2]; // 2 - marauders
+
+			EnemiesNum = (currGruntSpawns + currArcherSpawns + currMarauderSpawns);
+
+			GetWorld()->GetTimerManager().SetTimer(GruntTimerHandle, this, &ADungeonMaster_GameManager::SpawnGrunts, 0.9f, true);
+			GetWorld()->GetTimerManager().SetTimer(ArcherTimerHandle, this, &ADungeonMaster_GameManager::SpawnArchers, 1.5f, true);
+			GetWorld()->GetTimerManager().SetTimer(MarauderTimerHandle, this, &ADungeonMaster_GameManager::SpawnMarauders, 4.f, true);
+			retVal = true;
+		}
+	}
+
+	return retVal;
+}
+
+void ADungeonMaster_GameManager::SpawnGrunts()
+{
+	if (currGruntSpawns == 0)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(GruntTimerHandle);
+	}
+	else
+	{
+		SpawnEnemy(Grunts);
+		currGruntSpawns -= 1;
+	}
+	
+	
+}
+
+void ADungeonMaster_GameManager::SpawnArchers()
+{
+	if (currArcherSpawns == 0)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(ArcherTimerHandle);
+	}
+	else
+	{
+		SpawnEnemy(Archers);
+		currArcherSpawns -= 1;
+	}
+	
+}
+
+void ADungeonMaster_GameManager::SpawnMarauders()
+{
+	if (currMarauderSpawns == 0)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(MarauderTimerHandle);
+	}
+	else
+	{
+		SpawnEnemy(Marauders);
+		currMarauderSpawns -= 1;
+	}
+	
+}
+
+void ADungeonMaster_GameManager::SpawnEnemy(UClass* enemyType)
+{
+	FVector actorSpawnLocation = StartLocation;
+	FRotator SpawnRotation = FRotator(0.f, 0.f, 0.f);
+	FActorSpawnParameters Spawn;
+	Spawn.Owner = this;
+	Spawn.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+	GetWorld()->SpawnActor(enemyType, &actorSpawnLocation, &SpawnRotation, Spawn);
 }

@@ -13,5 +13,16 @@ UCLASS()
 class DUNGEONMASTER_API ADungeonMaster_Characters_Wizard : public ADungeonMaster_Characters
 {
 	GENERATED_BODY()
-	
+
+public:
+
+	ADungeonMaster_Characters_Wizard();
+
+protected:
+
+	virtual void DamageFunction() override;
+
+
+private:
+
 };

@@ -49,6 +49,10 @@ public: // variables
 
 
 	/*Info*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Info")
+	float currHealth;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Info")
+	float maxHealth = 50.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Info")
 	UTexture2D* Thumbnail;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Info")

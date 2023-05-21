@@ -14,7 +14,8 @@ void ADungeonMaster_AIController::BeginPlay()
 
 void ADungeonMaster_AIController::MoveToSpecifiedLocation(FVector location)
 {
-	this->MoveToLocation(location, 10.f, true);
+	if (!location.IsZero())
+		this->MoveToLocation(location, 5.f, true);
 }
 
 void ADungeonMaster_AIController::StopUnitMovement()

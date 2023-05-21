@@ -9,8 +9,6 @@
 UDELEGATE()
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FCharGetPlayerController);
 
-UDELEGATE() // when this is called attack first unit in InRange array
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FAttackEnemy);
 
 UCLASS()
 class DUNGEONMASTER_API ADungeonMaster_Characters : public ACharacter
@@ -24,6 +22,15 @@ public: // functions
 	/*Selection*/
 	UFUNCTION()
 	void OnCharacterClick(AActor* TouchedActor, FKey ButtonPressed);
+	UFUNCTION(BlueprintImplementableEvent)
+	void SetupUI();
+	UFUNCTION(BlueprintImplementableEvent)
+	void ClearUI();
+
+	UFUNCTION(BlueprintCallable)
+	void DestroySelf();
+	UFUNCTION()
+	void DecalVisible();
 
 public: // variables
 
@@ -66,10 +73,6 @@ public: // variables
 	FVector Destination;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = PC)
 	bool bIsMoving = false;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = PC)
-	float AttackTimer = 0.f;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = PC)
-	float AttackFinalTimer = 0.f;
 
 protected: // bp calls
 	// Called when the game starts or when spawned
@@ -78,12 +81,16 @@ protected: // bp calls
 	virtual void Tick(float DeltaTime) override;
 
 	/*Attacking*/
-	UPROPERTY(VisibleAnywhere, Category = "Attacking")
+	UPROPERTY(VisibleAnywhere, Category = "PC")
 	TArray<AActor*> InRange;
-	UPROPERTY(BlueprintAssignable)
-	FAttackEnemy AttackingEnemy;
+	UPROPERTY(VisibleAnywhere, Category = "PC")
+	FTimerHandle AttackTimerHandle;
 	UFUNCTION()
-	virtual void CharacterAttackUnit();
+	void StartAttack();
+	UFUNCTION()
+	void StillAttacking();
+	UFUNCTION()
+	virtual void DamageFunction();
 	UFUNCTION()
 	void DamageEnemy(AActor* Obj);
 
@@ -92,20 +99,14 @@ private:
 	UFUNCTION()
 	void AttackRangeCheckIn(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
-	UFUNCTION()
+		UFUNCTION()
 	void AttackRangeCheckOut(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-	UFUNCTION()
-	float TimerFunction(float SetTime, float DesiredTime);
-
 	UPROPERTY(BlueprintAssignable)
 	FCharGetPlayerController CallForPC;
-
 	UFUNCTION()
 	void GetPlayerController();
-
 	UFUNCTION()
 	void SetNewMove(FVector location);
 

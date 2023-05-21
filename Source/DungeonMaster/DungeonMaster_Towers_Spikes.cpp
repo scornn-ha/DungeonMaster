@@ -2,6 +2,8 @@
 
 
 #include "DungeonMaster_Towers_Spikes.h"
+#include "Components/SphereComponent.h"
+#include "Components/DecalComponent.h"
 
 ADungeonMaster_Towers_Spikes::ADungeonMaster_Towers_Spikes()
 {
@@ -11,23 +13,20 @@ ADungeonMaster_Towers_Spikes::ADungeonMaster_Towers_Spikes()
 	Cost = 400;
 	Damage = 10.f;
 	AttackCD = 1.5f;
+
+	AttackRange->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
+	SelectedComp->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
+	AreaOfEffect->SetRelativeLocation(FVector(0.f, 0.f, 0.f));
 }
 
-void ADungeonMaster_Towers_Spikes::TowerAttackUnit() 
+void ADungeonMaster_Towers_Spikes::DamageFunction() 
 {
 	if (InRange.Num() > 0)
 	{
-		if (AttackTimer >= AttackFinalTimer)
+		for (int i = 0; i < InRange.Num(); i++) 
 		{
-			for (int i = 0; i < InRange.Num(); i++) 
-			{
-				DealDamageToEnemy(InRange[i]);
-			}
-			Attacking.Broadcast();
+			DealDamageToEnemy(InRange[i]);
 		}
-		else
-		{
-			Attacking.Broadcast();
-		}
+
 	}
 }
