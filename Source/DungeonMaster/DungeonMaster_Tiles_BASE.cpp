@@ -176,6 +176,7 @@ void ADungeonMaster_Tiles_BASE::UpdateConnections()
 		bool isHit = GetWorld()->SweepMultiByChannel(tHits, connectPointLoc, connectPointLoc, FQuat(GetActorRotation()),
 			ECC_GameTraceChannel1, tcheckArea); // connections
 
+		//left these in for clarity
 		DrawDebugBox(GetWorld(), connectPointLoc, FVector(35.f, 15.f, 100.f), FQuat(GetActorRotation()), FColor::Cyan, true);
 
 		if (isHit == true)

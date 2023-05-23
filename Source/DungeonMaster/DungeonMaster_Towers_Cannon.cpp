@@ -31,7 +31,7 @@ void ADungeonMaster_Towers_Cannon::DamageFunction()
 		AActor* attackUnit = InRange[0];
 		TArray<FHitResult> tHits;
 		FCollisionShape tcheckArea = FCollisionShape::MakeSphere(250.f);
-		DrawDebugSphere(GetWorld(), attackUnit->GetActorLocation(), tcheckArea.GetSphereRadius(), 10, FColor::Red, true);
+		//DrawDebugSphere(GetWorld(), attackUnit->GetActorLocation(), tcheckArea.GetSphereRadius(), 10, FColor::Red, true);
 
 		bool isHit = GetWorld()->SweepMultiByChannel(tHits, attackUnit->GetActorLocation(), attackUnit->GetActorLocation(), FQuat::Identity, ECC_Pawn, tcheckArea);
 

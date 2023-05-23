@@ -86,7 +86,7 @@ void ADungeonMaster_GameManager::fillDownColumns(FVector startPos)
 		FVector size = FVector(cellSize / 2.1, cellSize / 2.1, cellSize / 2.1);
 
 		bool bIsHit = UKismetSystemLibrary::BoxTraceSingleForObjects(GetWorld(), startCell.midPoint, endLoc, size, FRotator(0.f, 0.f, 0.f),
-			objectTypes, false, IgnoreActors, EDrawDebugTrace::Persistent, tHit, true);
+			objectTypes, false, IgnoreActors, EDrawDebugTrace::None, tHit, true);
 		UE_LOG(LogTemp, Warning, TEXT("%s"), (bIsHit ? TEXT("true") : TEXT("false")));
 
 		Grid.Add(startCell);
